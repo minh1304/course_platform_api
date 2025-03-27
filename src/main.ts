@@ -13,6 +13,7 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Authorization',
   });
-  await app.listen(process.env.PORT ?? 3334);
+  app.enableShutdownHooks();
+  await app.listen(process.env.PORT ?? 3333);
 }
 bootstrap();

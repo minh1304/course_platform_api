@@ -5,12 +5,14 @@ import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from '@nestjs/config';
+import { UserService } from "src/user/user.service";
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private userService: UserService
   ) {}
 
   async signup(dto: AuthDto) {
@@ -44,12 +46,13 @@ export class AuthService {
   }
   async signin(dto: AuthDto): Promise<{ access_token: string }> {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          email: dto.email,
-        },
-      });
+      // const user = await this.prisma.user.findUnique({
+      //   where: {
+      //     email: dto.email,
+      //   },
+      // });
 
+      const user = await this.userService.getUserByEmail(dto.email);
       if (!user) throw new ForbiddenException('Credentials Incorrect!');
 
       // compare password
@@ -57,15 +60,11 @@ export class AuthService {
 
       if (!pwMatches) throw new UnauthorizedException('Credentials Incorrect!');
 
-      const { hash, ...userWithoutHash } = user;
-
-      const access_token = await this.signToken(
-        userWithoutHash.id,
-        userWithoutHash.email,
-      );
+      const payload = { sub: user.id, username: user.email };
       return {
-        access_token: access_token,
+        access_token: await this.jwtService.signAsync(payload),
       };
+      
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -74,16 +73,5 @@ export class AuthService {
       }
       throw error;
     }
-  }
-  async signToken(userId: number, email: string): Promise<string> {
-    const payload = {
-      sub: userId,
-      email: email,
-    };
-    //const secret = this.config.get('DATABASE_URL');
-    return this.jwtService.signAsync(payload, {
-      expiresIn: '15m',
-      secret: 'tes',
-    });
   }
 }
