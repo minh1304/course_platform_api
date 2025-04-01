@@ -20,15 +20,15 @@ export class AuthService {
       // generate the password hash
       const hash = await argon.hash(dto.password);
 
-      const user = await this.prisma.user.create({
+      const user = await this.prisma.appUser.create({
         data: {
           email: dto.email,
           hash: hash,
-          firstName: 'Minh',
-          lastName: 'Vo',
+          fullName: 'Minh Vo',
+          userType: 'user'
         },
         select: {
-          id: true,
+          userId: true,
           email: true,
           createdAt: true,
         },
@@ -46,12 +46,6 @@ export class AuthService {
   }
   async signin(dto: AuthDto): Promise<{ access_token: string }> {
     try {
-      // const user = await this.prisma.user.findUnique({
-      //   where: {
-      //     email: dto.email,
-      //   },
-      // });
-
       const user = await this.userService.getUserByEmail(dto.email);
       if (!user) throw new ForbiddenException('Credentials Incorrect!');
 
@@ -60,7 +54,7 @@ export class AuthService {
 
       if (!pwMatches) throw new UnauthorizedException('Credentials Incorrect!');
 
-      const payload = { sub: user.id, username: user.email };
+      const payload = { sub: user.id, usertype: user.userType, username: user.email };
       return {
         access_token: await this.jwtService.signAsync(payload),
       };
