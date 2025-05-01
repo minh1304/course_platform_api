@@ -6,6 +6,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from '@nestjs/config';
 import { UserService } from "src/user/user.service";
+import { AuthCreateDto } from "./dto/authCreate.dto";
 
 @Injectable()
 export class AuthService {
@@ -15,7 +16,7 @@ export class AuthService {
     private userService: UserService
   ) {}
 
-  async signup(dto: AuthDto) {
+  async signup(dto: AuthCreateDto) {
     try {
       // generate the password hash
       const hash = await argon.hash(dto.password);
@@ -24,8 +25,9 @@ export class AuthService {
         data: {
           email: dto.email,
           hash: hash,
-          fullName: 'Minh Vo',
-          userType: 'user'
+          fullName: dto.fullname,
+          userType: (dto.usertype? 'teacher' : 'user' ) ,
+          isActive: false
         },
         select: {
           userId: true,
@@ -44,7 +46,7 @@ export class AuthService {
       throw error;
     }
   }
-  async signin(dto: AuthDto): Promise<{ access_token: string }> {
+  async signin(dto: AuthDto): Promise<{user: any, access_token: string }> {
     try {
       const user = await this.userService.getUserByEmail(dto.email);
       if (!user) throw new ForbiddenException('Credentials Incorrect!');
@@ -56,6 +58,11 @@ export class AuthService {
 
       const payload = { sub: user.id, usertype: user.userType, username: user.email };
       return {
+        user: {
+          email: user.email,
+          name: user.fullName,
+          usertype: user.userType
+        },
         access_token: await this.jwtService.signAsync(payload),
       };
       

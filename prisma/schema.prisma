@@ -15,6 +15,7 @@ datasource db {
 
 model AppUser {
   userId           String   @id @default(uuid())
+  isActive         Boolean
   email            String   @unique
   hash             String 
   fullName         String?
