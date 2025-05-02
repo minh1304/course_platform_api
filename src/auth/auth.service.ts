@@ -1,25 +1,29 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
-import { AuthDto } from "./dto";
+import { AuthDto, VerifyDto } from "./dto";
 import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from '@nestjs/config';
 import { UserService } from "src/user/user.service";
 import { AuthCreateDto } from "./dto/authCreate.dto";
+import { MailerService } from "@nestjs-modules/mailer";
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private userService: UserService
+    private userService: UserService,
+    private mailerService: MailerService,
   ) {}
 
   async signup(dto: AuthCreateDto) {
     try {
       // generate the password hash
       const hash = await argon.hash(dto.password);
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const codeExpired = new Date(Date.now() + 30 * 1000); 
 
       const user = await this.prisma.appUser.create({
         data: {
@@ -27,7 +31,10 @@ export class AuthService {
           hash: hash,
           fullName: dto.fullname,
           userType: (dto.usertype? 'teacher' : 'user' ) ,
-          isActive: false
+          isActive: false,
+          code: code,
+          codeExpired: codeExpired,
+        
         },
         select: {
           userId: true,
@@ -35,8 +42,23 @@ export class AuthService {
           createdAt: true,
         },
       });
+      
+      // Send email here
+      await this.mailerService
+      .sendMail({
+        to: user.email, 
+        subject: 'Please confirm account ✔',
+        text: 'welcome',
+        template: './register',
+        context: {
+          name: dto.fullname,
+          code: code
+        }
+      })
+      .then(() => {})
+      .catch(() => {});
 
-      return user;
+      return { message: 'Signup successful. Verification code sent to email.' };
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
@@ -74,5 +96,23 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  async verifyEmail(dto: VerifyDto) {
+    const record = await this.prisma.appUser.findFirst({
+      where: {
+        userId: dto.userId,
+        code: dto.code
+      },
+    });
+    if (!record) throw new ForbiddenException('Invalid code');
+    if(record.codeExpired < new Date()) throw new ForbiddenException('Code expired');
+
+    // Update isActive field
+    await this.prisma.appUser.update({
+      where: { userId: dto.userId },
+      data: { isActive: true },
+    });
+    return { message: 'Email verified successfully.' };
   }
 }

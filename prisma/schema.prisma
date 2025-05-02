@@ -26,6 +26,8 @@ model AppUser {
   unsafeMetadata   Json?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  code             String
+  codeExpired      DateTime
 
   // Relations
   transactions      Transaction[]

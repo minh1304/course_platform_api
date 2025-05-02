@@ -1,18 +1,43 @@
 import { Body, Controller, Get, Post, Request, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
-import { AuthDto } from "./dto";
-import { AuthCreateDto } from "./dto/authCreate.dto";
-
+import { AuthDto, AuthCreateDto, VerifyDto } from "./dto";
+import { MailerService } from '@nestjs-modules/mailer';
 @Controller('auth')
 export class AuthController {
-    constructor(private authService : AuthService) {}
-    
-    @Post('signup')
-    signup(@Body() dto : AuthCreateDto) {
-        return this.authService.signup(dto);
-    }
-    @Post('signin')
-    signin(@Body() dto : AuthDto) {
-        return this.authService.signin(dto);           
-    }
+  constructor(
+    private authService: AuthService,
+    private readonly mailerService: MailerService,
+  ) {}
+
+  @Post('signup')
+  signup(@Body() dto: AuthCreateDto) {
+    return this.authService.signup(dto);
+  }
+  @Post('signin')
+  signin(@Body() dto: AuthDto) {
+    return this.authService.signin(dto);
+  }
+
+  @Post('verifyemail')
+  verifyEmail(@Body() dto: VerifyDto) {
+    return this.authService.verifyEmail(dto);
+  }
+
+
+
+  @Get('mail')
+  testMail() {
+    this.mailerService
+      .sendMail({
+        to: "vtm1304@gmail.com",
+        subject: 'Your account has been created',
+        template: './register',
+        context: {
+          name: "Minh Vo",
+          code: "12312321",
+        },
+      })
+      .then(() => {})
+      .catch(() => {});
+  }
 }
