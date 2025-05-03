@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotAcceptableException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { AuthDto, VerifyDto } from "./dto";
 import * as argon from 'argon2';
@@ -77,6 +77,8 @@ export class AuthService {
       const pwMatches = await argon.verify(user.hash, dto.password);
 
       if (!pwMatches) throw new UnauthorizedException('Credentials Incorrect!');
+
+      if(!user.isActive) throw new NotAcceptableException('Inactive Account');
 
       const payload = { sub: user.id, usertype: user.userType, username: user.email };
       return {
