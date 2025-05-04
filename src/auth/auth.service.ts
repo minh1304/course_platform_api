@@ -117,4 +117,8 @@ export class AuthService {
     });
     return { message: 'Email verified successfully.' };
   }
+
+  async getUserIdByEmail(email : string) {
+    return await this.userService.getUserIdByEmail(email);
+  }
 }

@@ -18,12 +18,15 @@ export class AuthController {
     return this.authService.signin(dto);
   }
 
-  @Post('verifyemail')
+  @Post('verify-email')
   verifyEmail(@Body() dto: VerifyDto) {
     return this.authService.verifyEmail(dto);
   }
 
-
+  @Post('get-user-id')
+  async getUserIdByEmail(@Body('email') email: string) {
+    return this.authService.getUserIdByEmail(email);
+  }
 
   @Get('mail')
   testMail() {
