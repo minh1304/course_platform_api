@@ -23,7 +23,7 @@ export class AuthService {
       // generate the password hash
       const hash = await argon.hash(dto.password);
       const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const codeExpired = new Date(Date.now() + 30 * 1000); 
+      const codeExpired = new Date(Date.now() + 60 * 5 * 1000);  // 5 minutes
 
       const user = await this.prisma.appUser.create({
         data: {
