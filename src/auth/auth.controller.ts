@@ -28,6 +28,17 @@ export class AuthController {
     return this.authService.getUserIdByEmail(email);
   }
 
+  @Post('resend-mail')
+  async resendMail(@Body('userid') userId: string) {
+    return this.authService.resendMail(userId);
+  }
+
+  @Post('get-expired-time')
+  async getExpiredTime(@Body('userid') userId: string) {
+    return this.authService.getExpiredTime(userId);
+  }
+
+
   @Get('mail')
   testMail() {
     this.mailerService

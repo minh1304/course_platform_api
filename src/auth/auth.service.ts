@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotAcceptableException, UnauthorizedException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotAcceptableException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { AuthDto, VerifyDto } from "./dto";
 import * as argon from 'argon2';
@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserService } from "src/user/user.service";
 import { AuthCreateDto } from "./dto/authCreate.dto";
 import { MailerService } from "@nestjs-modules/mailer";
-
+import { differenceInMinutes, format } from 'date-fns';
 @Injectable()
 export class AuthService {
   constructor(
@@ -118,7 +118,30 @@ export class AuthService {
     return { message: 'Email verified successfully.' };
   }
 
-  async getUserIdByEmail(email : string) {
+  async getUserIdByEmail(email : string){
     return await this.userService.getUserIdByEmail(email);
+  }
+  async resendMail(userId: string) {
+    // 1.1 Update Code + expired time
+    // 1.2 Return { fullName, code, Email}
+    // 2.  Call service send gmail
+  }
+  async getExpiredTime(userId: string) {
+    const userInfo = await this.userService.getUserById(userId);
+    if (!userInfo) {
+      throw new NotFoundException('User not found');
+    }
+
+    const expiredTime = userInfo.codeExpired;
+    const now = new Date();
+    
+    const formattedTime = format(expiredTime, "yyyy-MM-dd HH:mm:ss");
+    const minutesLeft = Math.max(0, differenceInMinutes(expiredTime, now));
+
+    return {
+      expiredAt: formattedTime,
+      minutesRemaining: minutesLeft,
+      isExpired: expiredTime < now,
+    };
   }
 }
