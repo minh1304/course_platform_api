@@ -23,7 +23,7 @@ export class AuthService {
       // generate the password hash
       const hash = await argon.hash(dto.password);
       const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const codeExpired = new Date(Date.now() + 60 * 5 * 1000);  // 5 minutes
+      const codeExpired = new Date(Date.now() + 60 * 1000);  // 1 minutes
 
       const user = await this.prisma.appUser.create({
         data: {
@@ -122,9 +122,37 @@ export class AuthService {
     return await this.userService.getUserIdByEmail(email);
   }
   async resendMail(userId: string) {
-    // 1.1 Update Code + expired time
-    // 1.2 Return { fullName, code, Email}
-    // 2.  Call service send gmail
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeExpired = new Date(Date.now() + 60 * 1000); // 1 minutes
+
+    // Update isActive field
+    const user = await this.prisma.appUser.update({
+      where: { userId: userId },
+      data: {
+        code: code,
+        codeExpired: codeExpired,
+        updatedAt: new Date(Date.now()),
+      },
+      select: {
+        fullName: true,
+        email: true,
+      },
+    });
+    await this.mailerService
+      .sendMail({
+        to: user.email,
+        subject: 'Please confirm account ✔',
+        text: 'welcome',
+        template: './register',
+        context: {
+          name: user.fullName,
+          code: code,
+        },
+      })
+      .then(() => {})
+      .catch(() => {});
+    return { message: 'Successful!' };
+
   }
   async getExpiredTime(userId: string) {
     const userInfo = await this.userService.getUserById(userId);
