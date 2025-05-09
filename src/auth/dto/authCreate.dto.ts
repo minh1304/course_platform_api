@@ -13,7 +13,6 @@ export class AuthCreateDto {
     @IsNotEmpty()
     fullname: string;
 
-    @IsEmpty()
     usertype: string;
 
 }

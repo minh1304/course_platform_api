@@ -1,11 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable } from '@nestjs/common';
 import { Course } from '@prisma/client';
 import { CreateCourseDto } from 'src/auth/dto/createCourse.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+// import { Cache } from 'cache-manager';
 
 @Injectable()
 export class CoursesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    // @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async getAllCourses(): Promise<Course[]> {
     return await this.prisma.course.findMany({
@@ -45,10 +50,11 @@ export class CoursesService {
           })),
         },
         enrollments: {
-            create: data.enrollments?.map(enrollment => ({
-                userId: enrollment.userId
-            })) || []
-        }
+          create:
+            data.enrollments?.map((enrollment) => ({
+              userId: enrollment.userId,
+            })) || [],
+        },
       },
       include: {
         sections: {
