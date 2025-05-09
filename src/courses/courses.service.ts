@@ -3,13 +3,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Course } from '@prisma/client';
 import { CreateCourseDto } from 'src/auth/dto/createCourse.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-// import { Cache } from 'cache-manager';
 
 @Injectable()
 export class CoursesService {
   constructor(
     private readonly prisma: PrismaService,
-    // @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async getAllCourses(): Promise<Course[]> {

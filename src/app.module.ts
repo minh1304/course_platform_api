@@ -8,6 +8,7 @@ import { CoursesModule } from './courses/courses.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { join } from 'path';
         },
       },
     }),
+    CacheModule,
   ],
 })
 export class AppModule {}
