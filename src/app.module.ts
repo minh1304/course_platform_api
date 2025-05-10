@@ -9,6 +9,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
 import { CacheModule } from './cache/cache.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { CacheModule } from './cache/cache.module';
       },
     }),
     CacheModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
