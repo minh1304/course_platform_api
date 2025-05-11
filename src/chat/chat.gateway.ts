@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
 
 interface ConnectedUser {
   userId: string;
+  userName: string;
   socketId: string;
 }
 
@@ -28,10 +29,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     const userId = client.handshake.query.userId as string;
-    console.log(`User connected: ${userId} with socket ${client.id}`);
+    const userName = client.handshake.query.userName as string;
+    console.log(`User connected: ${userId} with socket ${client.id} and Name is: ${userName}`);
     if (userId) {
       this.connectedUsers = this.connectedUsers.filter(u => u.userId !== userId); // optional deduplication
-      this.connectedUsers.push({ userId, socketId: client.id });
+      this.connectedUsers.push({ userId, userName, socketId: client.id });
       this.broadcastOnlineUsers();
     }
   }
@@ -44,7 +46,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   broadcastOnlineUsers() {
-    this.server.emit('onlineUsers', this.connectedUsers.map(u => u.userId));
+    this.server.emit('onlineUsers', this.connectedUsers.map(u => ({
+      userId: u.userId,
+      userName: u.userName
+    })));
   }
 
   @SubscribeMessage('sendMessage')
