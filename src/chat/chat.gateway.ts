@@ -1,22 +1,59 @@
-import { MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
-import { Server, Socket } from "socket.io";
-@WebSocketGateway(3002, {})
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect     {
+// chat.gateway.ts
+import {
+  WebSocketGateway,
+  SubscribeMessage,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  WebSocketServer,
+  ConnectedSocket,
+  MessageBody
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+
+interface ConnectedUser {
+  userId: string;
+  socketId: string;
+}
+
+@WebSocketGateway(3002, {
+  cors: {
+    origin: '*',
+  },
+})
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  @WebSocketServer()
+  server: Server;
+
+  private connectedUsers: ConnectedUser[] = [];
+
   handleConnection(client: Socket) {
-      console.log(`Client connected: ${client.id}`);
+    const userId = client.handshake.query.userId as string;
+    console.log(`User connected: ${userId} with socket ${client.id}`);
+    if (userId) {
+      this.connectedUsers = this.connectedUsers.filter(u => u.userId !== userId); // optional deduplication
+      this.connectedUsers.push({ userId, socketId: client.id });
+      this.broadcastOnlineUsers();
+    }
   }
-  handleDisconnect(client: any) {
-      console.log(`Client disconnected: ${client.id}`);
+
+  handleDisconnect(client: Socket) {
+    this.connectedUsers = this.connectedUsers.filter(
+      (user) => user.socketId !== client.id
+    );
+    this.broadcastOnlineUsers();
   }
-  @WebSocketServer() server: Server;
+
+  broadcastOnlineUsers() {
+    this.server.emit('onlineUsers', this.connectedUsers.map(u => u.userId));
+  }
 
   @SubscribeMessage('sendMessage')
-//   handleEvent(client: Socket, data: string) {
-//     client.emit('events', data);
-//     this.server.emit("events", 'broadcasting...', data);
-//   }
-  handleMessage(@MessageBody() message: { sender: string; content: string }) {
-    // Broadcast to all clients
-    this.server.emit('receiveMessage', message);
+  handleMessage(
+    @MessageBody() data: { to: string; from: string; content: string }
+  ) {
+    const receiver = this.connectedUsers.find((u) => u.userId === data.to);
+    if (receiver) {
+      this.server.to(receiver.socketId).emit('receiveMessage', data);
+    }
   }
-}   
+}
