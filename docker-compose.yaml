@@ -9,6 +9,12 @@ services:
       POSTGRES_PASSWORD: 123
       POSTGRES_DB: nest
     networks:
-      - db
+      - app-network
+  redis: 
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - app-network
 networks:
-  db:
+  app-network:

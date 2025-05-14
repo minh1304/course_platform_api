@@ -35,8 +35,24 @@ model AppUser {
   userCourseProgress UserCourseProgress[]
   comments           Comment[]
   coursesTaught Course[] @relation("TeacherCourses")
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+
 
   @@map("users")
+}
+
+model Message {
+  messageId String   @id @default(uuid())
+  senderId  String
+  receiverId String
+  content   String
+  createdAt DateTime @default(now())
+
+  sender   AppUser @relation("SentMessages", fields: [senderId], references: [userId])
+  receiver AppUser @relation("ReceivedMessages", fields: [receiverId], references: [userId])
+
+  @@map("messages")
 }
 
 enum UserType {

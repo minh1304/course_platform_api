@@ -1,18 +1,14 @@
 import { Module} from '@nestjs/common';
 import { CoursesController } from './courses.controller';
 import { CoursesService } from './courses.service';
-import { CacheModule, CacheInterceptor } from '@nestjs/cache-manager';
-import { APP_INTERCEPTOR } from '@nestjs/core';
-
+import { CacheModule } from 'src/cache/cache.module';
 @Module({
-  imports: [CacheModule.register()],
   controllers: [CoursesController],
   providers: [
-    CoursesService,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
-    },
+    CoursesService
   ],
+  imports: [
+    CacheModule 
+  ]
 })
 export class CoursesModule {}
