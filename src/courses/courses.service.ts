@@ -24,44 +24,45 @@ export class CoursesService {
   }
   async createCourse(data: CreateCourseDto) {
     return await this.prisma.course.create({
-      data: {
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        image: data.image,
-        price: data.price,
-        level: data.level,
-        status: data.status,
-        teacherId: data.teacherId,
-        teacherName: data.teacherName,
-        sections: {
-          create: data.sections.map((section) => ({
-            sectionTitle: section.sectionTitle,
-            sectionDescription: section.sectionDescription,
-            chapters: {
-              create: section.chapters.map((chapter) => ({
-                type: chapter.type,
-                title: chapter.title,
-                content: chapter.content,
-              })),
-            },
-          })),
-        },
-        enrollments: {
-          create:
-            data.enrollments?.map((enrollment) => ({
-              userId: enrollment.userId,
-            })) || [],
-        },
-      },
-      include: {
-        sections: {
-          include: {
-            chapters: true,
+    data: {
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      image: data.image,
+      price: data.price,
+      level: data.level,
+      status: data.status,
+      teacherId: data.teacherId,
+      teacherName: data.teacherName,
+      sections: {
+        create: data.sections?.map((section) => ({
+          sectionTitle: section.sectionTitle,
+          sectionDescription: section.sectionDescription,
+          chapters: {
+            create: section.chapters?.map((chapter) => ({
+              type: chapter.type,
+              title: chapter.title,
+              content: chapter.content,
+            })),
           },
-        },
-        enrollments: true,
+        })) || [],
       },
-    });
+      enrollments: {
+        create:
+          data.enrollments?.map((enrollment) => ({
+            userId: enrollment.userId,
+          })) || [],
+      },
+    },
+    include: {
+      sections: {
+        include: {
+          chapters: true,
+        },
+      },
+      enrollments: true,
+    },
+  });
+
   }
 }
